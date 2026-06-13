@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup Qatar 2022 — Strategic Engagement Dashboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#F9F3EE;color:#1a1a1a;min-height:100vh}
+
+  .top-bar{background:#8A1538;padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .top-bar-title{font-size:17px;font-weight:700;color:#FCF0E4;letter-spacing:.2px}
+  .top-bar-sub{font-size:11px;color:#e8c4a0;margin-top:2px}
+  .badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;background:#E5A932;color:#5C0E24;letter-spacing:.3px}
+
+  .db-wrap{max-width:980px;margin:0 auto;padding:24px 20px 48px}
+
+  .nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px;background:#fff;border:1.5px solid #d9b99b;border-radius:12px;padding:8px 10px}
+  .nav-btn{font-size:12px;font-weight:600;padding:6px 16px;border-radius:8px;border:1.5px solid transparent;background:transparent;color:#8A1538;cursor:pointer;transition:all .18s;letter-spacing:.2px}
+  .nav-btn:hover{background:#FCF0E4;border-color:#d9b99b}
+  .nav-btn.active{background:#8A1538;color:#FCF0E4;border-color:#8A1538}
+
+  .section{display:none}
+  .section.active{display:block}
+
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+  .kpi{background:#fff;border:1.5px solid #d9b99b;border-radius:10px;padding:14px 13px;box-shadow:0 1px 4px rgba(138,21,56,.06)}
+  .kpi-label{font-size:10px;color:#8A1538;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .kpi-val{font-size:22px;font-weight:700;color:#1a1a1a}
+  .kpi-unit{font-size:12px;font-weight:400;color:#7a6050;margin-left:2px}
+  .kpi-delta{font-size:11px;margin-top:4px;font-weight:500}
+  .kpi-prev{font-size:10px;color:#9a7060;margin-top:2px}
+  .delta-up{color:#0F6E56}
+  .delta-down{color:#993C1D}
+
+  /* CHART CARDS */
+  .chart-wrap{background:#fff;border:1.5px solid #d9b99b;border-radius:12px;padding:18px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(138,21,56,.06)}
+  .chart-title{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:3px}
+  .chart-sub{font-size:11px;color:#7a6050;margin-bottom:12px}
+  .chart-unit{font-size:10px;color:#9a7060;font-style:italic;margin-bottom:10px;display:block}
+  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  @media(max-width:640px){.chart-row{grid-template-columns:1fr}}
+
+  /* LEGEND */
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:11px;color:#7a6050}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+  /* INSIGHT */
+  .insight-box{background:#FCF0E4;border:1.5px solid #d9b99b;border-left:4px solid #8A1538;border-radius:0 10px 10px 0;padding:12px 15px;margin-bottom:10px}
+  .insight-box .label{font-size:10px;color:#8A1538;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  .insight-box p{font-size:13px;color:#3d2b1f;line-height:1.6}
+
+  /* ACTION CARDS */
+  .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:640px){.action-grid{grid-template-columns:1fr}}
+  .action-card{border:1.5px solid #d9b99b;border-radius:12px;padding:14px;background:#fff;box-shadow:0 1px 4px rgba(138,21,56,.05)}
+  .action-card h4{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+  .action-card p{font-size:12px;color:#5a4035;line-height:1.55}
+  .priority-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;margin-bottom:8px;font-weight:700;letter-spacing:.2px}
+  .pri-high{background:#FAECE7;color:#8A1538;border:1px solid #f5c4b3}
+  .pri-med{background:#FAEEDA;color:#854F0B;border:1px solid #f5d898}
+  .pri-low{background:#EAF3DE;color:#3B6D11;border:1px solid #c0dd97}
+
+  /* TABLES */
+  .table-wrap{overflow-x:auto;margin-top:8px}
+  table{width:100%;font-size:12px;border-collapse:collapse}
+  th{text-align:left;padding:8px 11px;background:#FCF0E4;color:#8A1538;font-weight:700;font-size:11px;border-bottom:1.5px solid #d9b99b;text-transform:uppercase;letter-spacing:.3px}
+  th.right{text-align:right}
+  td{padding:8px 11px;border-bottom:1px solid #edd5bc;color:#1a1a1a;vertical-align:middle}
+  td.right{text-align:right}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fdf7f2}
+  tr.total-row td{background:#FCF0E4;font-weight:700;color:#8A1538;border-top:2px solid #d9b99b}
+  .pill-up{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;background:#D4EDDA;color:#0F6E56}
+  .pill-dn{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;background:#FAECE7;color:#993C1D}
+  .bar-mini{height:6px;border-radius:3px;background:#8A1538;display:inline-block;vertical-align:middle;margin-right:6px}
+  .tbl-note{font-size:10px;color:#9a7060;font-style:italic;margin-top:6px;display:block}
+
+  /* SECTION LABEL */
+  .section-label{font-size:11px;font-weight:700;color:#8A1538;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;padding-bottom:6px;border-bottom:1.5px solid #d9b99b}
+
+  /* GLOSSARY */
+  .glossary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  @media(max-width:640px){.glossary-grid{grid-template-columns:1fr}}
+  .gloss-card{background:#fff;border:1.5px solid #d9b99b;border-radius:10px;padding:13px 14px}
+  .gloss-term{font-size:12px;font-weight:700;color:#8A1538;margin-bottom:4px}
+  .gloss-def{font-size:12px;color:#5a4035;line-height:1.55}
+  .source-box{background:#fff;border:1.5px solid #d9b99b;border-radius:12px;padding:16px 18px;margin-top:6px}
+  .source-box h3{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #edd5bc}
+  .source-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f5e8db}
+  .source-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .source-num{background:#8A1538;color:#FCF0E4;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .source-text{font-size:12px;color:#5a4035;line-height:1.55}
+  .source-text strong{color:#1a1a1a;display:block;margin-bottom:2px}
+  .source-text a{color:#8A1538;text-decoration:none;word-break:break-all}
+  .source-text a:hover{text-decoration:underline}
+
+  /* FOOTER */
+  .footer{margin-top:32px;padding-top:16px;border-top:1.5px solid #d9b99b;font-size:11px;color:#9a7060;text-align:center;line-height:1.7}
+  .footer strong{color:#8A1538}
+
+  /* INDEX CHART HELPER */
+  .index-note{font-size:10px;color:#9a7060;background:#f5ebe0;border:1px solid #d9b99b;border-radius:6px;padding:5px 10px;display:inline-block;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="top-bar-title">FIFA World Cup Qatar 2022 — Strategic Engagement Dashboard</div>
+    <div class="top-bar-sub">Commercial Opportunity Analysis &nbsp;&nbsp;<span class="badge">FWC 2022 vs 2018</span></div>
+  </div>
+  <div style="font-size:11px;color:#e8c4a0;text-align:right">Produced by: Salman Alfaqih<br>Data source: FIFA / Nielsen / Publicis Sport &amp; Entertainment</div>
+</div>
+
+<div class="db-wrap">
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="nav-btn" onclick="switchTab('digital',this)">Digital shift</button>
+    <button class="nav-btn" onclick="switchTab('regions',this)">Regional breakdown</button>
+    <button class="nav-btn" onclick="switchTab('actions',this)">Strategic actions</button>
+    <button class="nav-btn" onclick="switchTab('glossary',this)">Glossary &amp; sources</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       OVERVIEW
+  ══════════════════════════════════════════ -->
+  <div id="overview" class="section active">
+    <div class="section-label">Tournament at a glance — FWC Qatar 2022</div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Total engagement</div>
+        <div class="kpi-val">5.0<span class="kpi-unit">billion people</span></div>
+        <div class="kpi-delta delta-up">All media combined</div>
+        <div class="kpi-prev">Linear TV + Digital + Social + FIFA platforms</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Final reach</div>
+        <div class="kpi-val">1.42<span class="kpi-unit">billion viewers</span></div>
+        <div class="kpi-delta delta-up">All-time record</div>
+        <div class="kpi-prev">2018 Final: 1.12 billion viewers</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Social engagements</div>
+        <div class="kpi-val">811<span class="kpi-unit">million</span></div>
+        <div class="kpi-delta delta-up">+448% vs 2018</div>
+        <div class="kpi-prev">FIFA social channels · Nov–Dec 2022</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Global TV consumption</div>
+        <div class="kpi-val">36.22<span class="kpi-unit">billion hrs</span></div>
+        <div class="kpi-delta delta-up">+4.5% vs 2018</div>
+        <div class="kpi-prev">2018: 34.66 billion viewer hours</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Linear TV reach</div>
+        <div class="kpi-val">2.87<span class="kpi-unit">billion</span></div>
+        <div class="kpi-delta delta-down">−11.9% vs 2018</div>
+        <div class="kpi-prev">2018: 3.26 billion viewers</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Digital streaming reach</div>
+        <div class="kpi-val">2.65<span class="kpi-unit">billion</span></div>
+        <div class="kpi-delta delta-up">First-time reported</div>
+        <div class="kpi-prev">Digital metric not tracked in 2018</div>
+      </div>
+    </div>
+
+    <!-- Chart 1: Media channel reach -->
+    <div class="chart-wrap">
+      <div class="chart-title">Media channel reach — 2022 vs 2018</div>
+      <div class="chart-sub">Unique audience by channel. Only Linear TV has a 2018 comparable figure.</div>
+      <span class="chart-unit">Unit: billions of unique viewers (bn)</span>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#8A1538"></span>2022</span>
+        <span><span class="leg-dot" style="background:#E5A932"></span>2018 (Linear TV only — for comparison)</span>
+      </div>
+      <div style="position:relative;height:230px"><canvas id="c1"></canvas></div>
+    </div>
+
+    <div class="chart-row">
+      <!-- Chart 2: Consumption by edition -->
+      <div class="chart-wrap">
+        <div class="chart-title">TV viewer hours — by World Cup edition</div>
+        <div class="chart-sub">Total consumption across last 4 tournaments</div>
+        <span class="chart-unit">Unit: billions of viewer hours (bn hrs)</span>
+        <div style="position:relative;height:190px"><canvas id="c2"></canvas></div>
+      </div>
+
+      <!-- Chart 3: Reach vs consumption grouped bar -->
+      <div class="chart-wrap">
+        <div class="chart-title">Reach (declining) vs Consumption (growing)</div>
+        <div class="chart-sub">2018 vs 2022 — fewer viewers watched more total hours</div>
+        <span class="chart-unit">Reach: billions of viewers (bn) &nbsp;|&nbsp; Consumption: billions of viewer hours (bn hrs)</span>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#8A1538"></span>2022</span>
+          <span><span class="leg-dot" style="background:#E5A932"></span>2018</span>
+        </div>
+        <div style="position:relative;height:190px"><canvas id="c3"></canvas></div>
+      </div>
+    </div>
+
+    <!-- TABLE 1: Platform comparison -->
+    <div class="chart-wrap">
+      <div class="chart-title">Platform shift — Linear TV vs Digital vs Social</div>
+      <div class="chart-sub">How each channel performed in 2022, with year-on-year comparison where data exists</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th class="right">2018 figure</th>
+              <th class="right">2022 figure</th>
+              <th class="right">Unit</th>
+              <th class="right">Change vs 2018</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Linear TV reach</strong> (1-min)</td>
+              <td class="num">3,261.9M viewers</td>
+              <td class="num">2,873.0M viewers</td>
+              <td class="num">Millions of viewers</td>
+              <td class="right"><span class="pill-dn">−11.9%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Linear TV reach</strong> (20-min)</td>
+              <td class="num">2,650.0M viewers</td>
+              <td class="num">2,210.0M viewers</td>
+              <td class="num">Millions of viewers</td>
+              <td class="right"><span class="pill-dn">−16.6%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Total TV viewer hours</strong></td>
+              <td class="num">34.66bn hrs</td>
+              <td class="num">36.22bn hrs</td>
+              <td class="num">Billions of viewer hours</td>
+              <td class="right"><span class="pill-up">+4.5%</span></td>
+            </tr>
+            <tr>
+              <td><strong>Digital video views</strong></td>
+              <td class="num" style="color:#9a7060;font-style:italic">Not reported (2018)</td>
+              <td class="num">24.41bn views</td>
+              <td class="num">Billions of video views</td>
+              <td class="right"><span class="pill-up">Report states 4× Russia 2018</span></td>
+            </tr>
+            <tr>
+              <td><strong>Digital viewing hours (MRL reported)</strong></td>
+              <td class="num">0.72bn hrs</td>
+              <td class="num">2.97bn hrs</td>
+              <td class="num">Billions of hours</td>
+              <td class="right"><span class="pill-up">Triples 2018 total</span></td>
+            </tr>
+            <tr>
+              <td><strong>Social media engagements</strong></td>
+              <td class="num" style="color:#9a7060;font-style:italic">Not reported (2018)</td>
+              <td class="num">811M</td>
+              <td class="num">Millions of engagements</td>
+              <td class="right"><span class="pill-up">+448% vs 2018</span></td>
+            </tr>
+            <tr>
+              <td><strong>Social media impressions</strong></td>
+              <td class="num" style="color:#9a7060;font-style:italic">Not reported (2018)</td>
+              <td class="num">15.0bn</td>
+              <td class="num">Billions of impressions</td>
+              <td class="right"><span class="pill-up">+113% vs 2018</span></td>
+            </tr>
+            <tr>
+              <td><strong>Social media video views</strong></td>
+              <td class="num" style="color:#9a7060;font-style:italic">Not reported (2018)</td>
+              <td class="num">3.6bn</td>
+              <td class="num">Billions of video views</td>
+              <td class="right"><span class="pill-up">+202% vs 2018</span></td>
+            </tr>
+            <tr>
+              <td><strong>FIFA follower growth</strong></td>
+              <td class="num" style="color:#9a7060;font-style:italic">Not reported (2018)</td>
+              <td class="num">28.9M new followers</td>
+              <td class="num">New followers (all platforms)</td>
+              <td class="right"><span class="pill-up">+111% vs 2018</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* 2018 social and digital figures were not reported at a comparable level of detail. Only % growth vs 2018 is stated in the FIFA source report. "Not reported" means the exact 2018 baseline figure is not in the source data. The 2018 digital viewing hours figure (0.72bn) is the verified MRL-reported total from the FIFA report.</span>
+      </div>
+    </div>
+
+    <!-- TABLE 2: Match audience by stage -->
+    <div class="chart-wrap">
+      <div class="chart-title">Average live TV audience by competition stage — 2022 vs 2018</div>
+      <div class="chart-sub">In-home linear TV viewers only. Shows how audience scales from group stage to the Final.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th class="right">2018 avg (M viewers)</th>
+              <th class="right">2022 avg (M viewers)</th>
+              <th class="right">Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Group stage</td><td class="num">162M</td><td class="num">148M</td><td class="right"><span class="pill-dn">−9.1%</span></td></tr>
+            <tr><td>Round of 16</td><td class="num">246M</td><td class="num">199M</td><td class="right"><span class="pill-dn">−19.1%</span></td></tr>
+            <tr><td>Quarter-finals</td><td class="num">261M</td><td class="num">268M</td><td class="right"><span class="pill-up">+2.9%</span></td></tr>
+            <tr><td>Semi-finals</td><td class="num">321M</td><td class="num">317M</td><td class="right"><span class="pill-dn">−1.2%</span></td></tr>
+            <tr><td>Third place play-off</td><td class="num">236M</td><td class="num">242M</td><td class="right"><span class="pill-up">+2.5%</span></td></tr>
+            <tr class="total-row"><td>Final</td><td class="num">517M</td><td class="num">571M</td><td class="right"><span class="pill-up">+10.5%</span></td></tr>
+            <tr class="total-row"><td>64-match average</td><td class="num">191M</td><td class="num">175M</td><td class="right"><span class="pill-dn">−8.2%</span></td></tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* Figures refer to in-home viewing only and exclude out-of-home (OOH) and digital streaming audiences.</span>
+      </div>
+    </div>
+
+    <!-- TABLE 3: Top 10 most watched matches -->
+    <div class="chart-wrap">
+      <div class="chart-title">Top 10 most watched matches — Linear TV global live audience</div>
+      <div class="chart-sub">Ranked by average in-home live TV audience across all broadcasting markets</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30px">Rank</th>
+              <th>Match</th>
+              <th>Stage</th>
+              <th class="right">Global live audience</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="font-weight:700;color:#8A1538">1</td><td><strong>Argentina v France</strong></td><td>Final</td><td class="num">570.8M viewers</td></tr>
+            <tr><td>2</td><td>France v Morocco</td><td>Semi-final</td><td class="num">325.5M viewers</td></tr>
+            <tr><td>3</td><td>Argentina v Croatia</td><td>Semi-final</td><td class="num">309.1M viewers</td></tr>
+            <tr><td>4</td><td>Morocco v Portugal</td><td>Quarter-final</td><td class="num">291.4M viewers</td></tr>
+            <tr><td>5</td><td>Croatia v Brazil</td><td>Quarter-final</td><td class="num">275.2M viewers</td></tr>
+            <tr><td>6</td><td>England v France</td><td>Quarter-final</td><td class="num">254.2M viewers</td></tr>
+            <tr><td>7</td><td>Netherlands v Argentina</td><td>Quarter-final</td><td class="num">252.0M viewers</td></tr>
+            <tr><td>8</td><td>Croatia v Morocco</td><td>Third place</td><td class="num">241.8M viewers</td></tr>
+            <tr><td>9</td><td>Qatar v Ecuador</td><td>Group A</td><td class="num">240.7M viewers</td></tr>
+            <tr><td>10</td><td>Morocco v Spain</td><td>Round of 16</td><td class="num">229.2M viewers</td></tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* In-home viewing only. Figures exclude OOH and digital streaming audiences.</span>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="label">Key insight — the migration narrative</div>
+      <p>Linear TV reach declined 11.9%, yet total viewer hours rose 4.5% to 36.22 billion. The audience didn't disappear — it migrated to digital and streaming platforms. This represents a key commercial narrative for FIFA's media rights strategy going into the 2026 edition.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       DIGITAL SHIFT
+  ══════════════════════════════════════════ -->
+  <div id="digital" class="section">
+    <div class="section-label">The digital migration story</div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Digital video views</div>
+        <div class="kpi-val">24.41<span class="kpi-unit">bn views</span></div>
+        <div class="kpi-delta delta-up">~4× Russia 2018 (~5.7bn)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Digital viewing hours</div>
+        <div class="kpi-val">2.97<span class="kpi-unit">bn hrs</span></div>
+        <div class="kpi-delta delta-up">+312% vs 2018 (0.72bn hrs)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">China — digital share</div>
+        <div class="kpi-val">49.8<span class="kpi-unit">% of digital hrs</span></div>
+        <div class="kpi-delta delta-down">But only 8.8% of linear TV</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Final — digital views</div>
+        <div class="kpi-val">786.75<span class="kpi-unit">M live views</span></div>
+        <div class="kpi-delta delta-up">196.1M hours of live streaming</div>
+      </div>
+    </div>
+
+    <!-- Social media actual values chart -->
+    <div class="chart-wrap">
+      <div class="chart-title">FIFA social media performance — 2022 actuals with % growth vs 2018</div>
+      <div class="chart-sub">2022 verified figures from FIFA source report. 2018 baseline figures were not reported at comparable detail — only % growth is confirmed.</div>
+      <span class="chart-unit">Impressions &amp; Video views: billions (bn) &nbsp;·&nbsp; Engagements &amp; New followers: millions (M) &nbsp;·&nbsp; Posts: thousands (K)</span>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#8A1538"></span>2022 (confirmed figures)</span>
+        <span style="font-style:italic;color:#9a7060">% labels = confirmed growth vs 2018 per FIFA report</span>
+      </div>
+      <div style="position:relative;height:260px"><canvas id="c_social"></canvas></div>
+    </div>
+
+    <!-- TABLE: Social media platform breakdown -->
+    <div class="chart-wrap">
+      <div class="chart-title">FIFA social media — platform-level breakdown (2022)</div>
+      <div class="chart-sub">Performance across Facebook, Instagram, X (Twitter), TikTok, and YouTube — 14 Nov to 18 Dec 2022</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th class="right">Posts published</th>
+              <th class="right">Key metric</th>
+              <th class="right">Follower growth vs 2018</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Facebook</td><td class="num">6,100 posts</td><td class="num">10% of link clicks</td><td class="right">—</td></tr>
+            <tr><td>Instagram</td><td class="num">3,600 posts + 2,300 Stories</td><td class="num">27% of follower growth; 60% of all engagements</td><td class="right"><span class="pill-up">Significant</span></td></tr>
+            <tr><td>X (Twitter / formerly)</td><td class="num">23,400 posts</td><td class="num">46% of link clicks</td><td class="right">—</td></tr>
+            <tr><td>TikTok</td><td class="num">473 posts</td><td class="num">23% of follower growth; surged in final stages</td><td class="right"><span class="pill-up">+116% (12M total)</span></td></tr>
+            <tr><td>YouTube</td><td class="num">562 posts</td><td class="num">Video archive &amp; highlights hub</td><td class="right">—</td></tr>
+            <tr class="total-row"><td>All platforms combined</td><td class="num">34,100 posts total</td><td class="num">811M engagements · 15.0bn impressions · 3.6bn video views</td><td class="right"><span class="pill-up">+111% new followers (28.9M)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Doughnut: Digital hours by region -->
+    <div class="chart-wrap">
+      <div class="chart-title">Digital viewing hours by region — share of 2.97 billion total hours</div>
+      <div class="chart-sub">Asia accounts for nearly two-thirds of all digital consumption globally</div>
+      <span class="chart-unit">Unit: % share of 2.97 billion total digital viewing hours</span>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#8A1538"></span>Asia (62.8%)</span>
+        <span><span class="leg-dot" style="background:#1D9E75"></span>South America (15.9%)</span>
+        <span><span class="leg-dot" style="background:#D85A30"></span>Europe (11.1%)</span>
+        <span><span class="leg-dot" style="background:#E5A932"></span>N.C. America (8.6%)</span>
+        <span><span class="leg-dot" style="background:#888780"></span>Africa &amp; ME (0.5%)</span>
+        <span><span class="leg-dot" style="background:#5DCAA5"></span>Oceania (1.2%)</span>
+      </div>
+      <div style="position:relative;height:250px"><canvas id="c4"></canvas></div>
+    </div>
+
+    <!-- Live vs VOD chart -->
+    <div class="chart-wrap">
+      <div class="chart-title">Live vs VOD digital viewing hours — by region</div>
+      <div class="chart-sub">Live dominates all regions. N.C. America has the highest VOD-to-Live ratio (53M VOD vs 202M Live = 26%). Asia has the largest absolute VOD volume (191M hours).</div>
+      <span class="chart-unit">Unit: millions of viewing hours (M hrs)</span>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#8A1538"></span>Live hours</span>
+        <span><span class="leg-dot" style="background:#E5A932"></span>VOD hours</span>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="c5"></canvas></div>
+    </div>
+
+    <!-- TABLE: Digital by region -->
+    <div class="chart-wrap">
+      <div class="chart-title">Digital streaming — video views &amp; hours by region</div>
+      <div class="chart-sub">Breakdown of 24.41 billion total video views and 2.97 billion total viewing hours across regions</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th class="right">Video views (M)</th>
+              <th class="right">Share of views</th>
+              <th class="right">Viewing hours (M hrs)</th>
+              <th class="right">Share of hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Asia</td><td class="num">15,952M</td><td class="num">65.4%</td><td class="num">1,864M hrs</td><td class="num">62.8%</td></tr>
+            <tr><td>South America</td><td class="num">4,545M</td><td class="num">18.6%</td><td class="num">471M hrs</td><td class="num">15.9%</td></tr>
+            <tr><td>N.C. America &amp; Caribbean</td><td class="num">2,430M</td><td class="num">10.0%</td><td class="num">255M hrs</td><td class="num">8.6%</td></tr>
+            <tr><td>Europe</td><td class="num">1,188M</td><td class="num">4.9%</td><td class="num">328M hrs</td><td class="num">11.1%</td></tr>
+            <tr><td>Oceania</td><td class="num">213M</td><td class="num">0.9%</td><td class="num">35M hrs</td><td class="num">1.2%</td></tr>
+            <tr><td>Africa &amp; Middle East</td><td class="num">77M</td><td class="num">0.3%</td><td class="num">15M hrs</td><td class="num">0.5%</td></tr>
+            <tr class="total-row"><td>Global total</td><td class="num">24,406M views</td><td class="num">100%</td><td class="num">2,969M hrs</td><td class="num">100%</td></tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* Includes MRL owned &amp; operated platforms plus social media. Estimates applied where MRL data was partially unavailable.</span>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="label">Commercial gap — China</div>
+      <p>China accounts for 49.8% of all global digital viewing hours (approx. 1,480M hrs), yet contributes only 8.8% of global linear TV viewership. Platforms like Douyin, Migu Video, and CCTV.com are the primary broadcast infrastructure — FIFA's commercial and sponsorship models must urgently reflect this digital-first reality ahead of 2026.</p>
+    </div>
+    <div class="insight-box" style="border-left-color:#1D9E75">
+      <div class="label" style="color:#0F6E56">Platform signal — short-form video</div>
+      <p>The 2022 Final generated 621% more social media engagements than the 2018 Final. Instagram drove 60% of all engagements across the tournament. TikTok grew 116% in total followers (reaching 12M) and surged particularly in the knockout stages. Short-form video is no longer supplementary — it is a primary fan engagement channel requiring dedicated commercial activation.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       REGIONAL BREAKDOWN
+  ══════════════════════════════════════════ -->
+  <div id="regions" class="section">
+    <div class="section-label">Where the audience lives — regional breakdown</div>
+
+    <!-- Regional TV reach chart -->
+    <div class="chart-wrap">
+      <div class="chart-title">Regional linear TV reach — 2022 vs 2018</div>
+      <div class="chart-sub">Africa &amp; Middle East was the only region to grow (+2.4%); Europe saw the sharpest decline (−24.8%)</div>
+      <span class="chart-unit">Unit: millions of unique viewers (M) — 1-minute reach</span>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#8A1538"></span>2022</span>
+        <span><span class="leg-dot" style="background:#E5A932"></span>2018</span>
+      </div>
+      <div style="position:relative;height:300px"><canvas id="c6"></canvas></div>
+    </div>
+
+    <!-- TABLE: Regional reach -->
+    <div class="chart-wrap">
+      <div class="chart-title">Regional linear TV reach — full comparison table</div>
+      <div class="chart-sub">All figures are 1-minute reach (unique viewers who watched at least 1 consecutive minute)</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th class="right">2018 reach (M)</th>
+              <th class="right">2022 reach (M)</th>
+              <th class="right">Change (M)</th>
+              <th class="right">% difference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Africa &amp; Middle East</td><td class="num">537.0M</td><td class="num">550.0M</td><td class="num delta-up">+13.0M</td><td class="right"><span class="pill-up">+2.4%</span></td></tr>
+            <tr><td>Asia</td><td class="num">1,415.7M</td><td class="num">1,226.8M</td><td class="num delta-down">−188.9M</td><td class="right"><span class="pill-dn">−13.3%</span></td></tr>
+            <tr><td>Europe</td><td class="num">661.3M</td><td class="num">497.5M</td><td class="num delta-down">−163.8M</td><td class="right"><span class="pill-dn">−24.8%</span></td></tr>
+            <tr><td>N.C. America &amp; Caribbean</td><td class="num">277.2M</td><td class="num">267.2M</td><td class="num delta-down">−10.0M</td><td class="right"><span class="pill-dn">−3.6%</span></td></tr>
+            <tr><td>Oceania</td><td class="num">14.8M</td><td class="num">13.0M</td><td class="num delta-down">−1.8M</td><td class="right"><span class="pill-dn">−12.5%</span></td></tr>
+            <tr><td>South America</td><td class="num">355.9M</td><td class="num">318.6M</td><td class="num delta-down">−37.3M</td><td class="right"><span class="pill-dn">−10.5%</span></td></tr>
+            <tr class="total-row"><td>Global total</td><td class="num">3,261.9M</td><td class="num">2,873.0M</td><td class="num delta-down">−388.9M</td><td class="right"><span class="pill-dn">−11.9%</span></td></tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* Russia and Belarus excluded from both years' figures per applicable sanctions. Russia contributed ~118M viewers in 2018, partly explaining Europe's decline.</span>
+      </div>
+    </div>
+
+    <!-- TABLE: Consumption by region -->
+    <div class="chart-wrap">
+      <div class="chart-title">Regional TV viewer hours — consumption comparison, 2022 vs 2018</div>
+      <div class="chart-sub">Total hours consumed (average audience × broadcast duration). A measure of engagement depth, not just audience size.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th class="right">2018 (bn hrs)</th>
+              <th class="right">2022 (bn hrs)</th>
+              <th class="right">% change</th>
+              <th class="right">Hrs per viewer (2022)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Africa &amp; Middle East</td><td class="num">5.17bn</td><td class="num">9.89bn</td><td class="right"><span class="pill-up">+91.3%</span></td><td class="num">2.9 hrs</td></tr>
+            <tr><td>South America</td><td class="num">5.52bn</td><td class="num">7.21bn</td><td class="right"><span class="pill-up">+30.6%</span></td><td class="num">1.9 hrs</td></tr>
+            <tr><td>Asia</td><td class="num">10.66bn</td><td class="num">9.56bn</td><td class="right"><span class="pill-dn">−10.3%</span></td><td class="num">1.7 hrs</td></tr>
+            <tr><td>N.C. America &amp; Caribbean</td><td class="num">3.56bn</td><td class="num">2.62bn</td><td class="right"><span class="pill-dn">−26.3%</span></td><td class="num">1.9 hrs</td></tr>
+            <tr><td>Europe</td><td class="num">9.67bn</td><td class="num">6.87bn</td><td class="right"><span class="pill-dn">−28.9%</span></td><td class="num">1.4 hrs</td></tr>
+            <tr><td>Oceania</td><td class="num">0.07bn</td><td class="num">0.06bn</td><td class="right"><span class="pill-dn">−12.6%</span></td><td class="num">1.5 hrs</td></tr>
+            <tr class="total-row"><td>Global total</td><td class="num">34.66bn</td><td class="num">36.22bn</td><td class="right"><span class="pill-up">+4.5%</span></td><td class="num">1.9 hrs avg</td></tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* "Hrs per viewer" = total viewer hours ÷ total reach for that region in 2022.</span>
+      </div>
+    </div>
+
+    <!-- TABLE: Coverage hours by region -->
+    <div class="chart-wrap">
+      <div class="chart-title">Broadcast coverage hours by region — 2022 vs 2018</div>
+      <div class="chart-sub">Total dedicated TV coverage hours (live + highlights + magazine shows). Global total fell 17.5% as broadcasters shifted to digital delivery.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th class="right">2018 (hrs)</th>
+              <th class="right">2022 (hrs)</th>
+              <th class="right">% change</th>
+              <th class="right">Share of 2022 global total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Africa &amp; Middle East</td><td class="num">14,787</td><td class="num">17,188</td><td class="right"><span class="pill-up">+16.2%</span></td><td class="num">23.1%</td></tr>
+            <tr><td>Asia</td><td class="num">16,450</td><td class="num">17,356</td><td class="right"><span class="pill-up">+5.5%</span></td><td class="num">23.3%</td></tr>
+            <tr><td>Europe</td><td class="num">17,004</td><td class="num">20,569</td><td class="right"><span class="pill-up">+21.0%</span></td><td class="num">27.6%</td></tr>
+            <tr><td>N.C. America &amp; Caribbean</td><td class="num">12,837</td><td class="num">7,159</td><td class="right"><span class="pill-dn">−44.2%</span></td><td class="num">9.6%</td></tr>
+            <tr><td>Oceania</td><td class="num">2,885</td><td class="num">2,767</td><td class="right"><span class="pill-dn">−4.1%</span></td><td class="num">3.7%</td></tr>
+            <tr><td>South America</td><td class="num">26,461</td><td class="num">9,528</td><td class="right"><span class="pill-dn">−64.0%</span></td><td class="num">12.8%</td></tr>
+            <tr class="total-row"><td>Global total</td><td class="num">90,424 hrs</td><td class="num">74,567 hrs</td><td class="right"><span class="pill-dn">−17.5%</span></td><td class="num">100%</td></tr>
+          </tbody>
+        </table>
+        <span class="tbl-note">* Europe's increase driven by +74.1% coverage in France (beIN Sports) and +27.5% in Portugal. South America's sharp drop reflects broadcaster rights changes, not audience interest.</span>
+      </div>
+    </div>
+
+    <!-- Top markets chart -->
+    <div class="chart-wrap">
+      <div class="chart-title">Top 10 markets — total cross-platform engagement</div>
+      <div class="chart-sub">China and India lead by a large margin; Indonesia (rank 5) is commercially under-activated relative to its engagement scale</div>
+      <span class="chart-unit">Unit: millions of engaged fans (M) — includes all media touchpoints</span>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#8A1538"></span>Tier 1 non-competing (China, India)</span>
+        <span><span class="leg-dot" style="background:#1D9E75"></span>Major competing markets</span>
+        <span><span class="leg-dot" style="background:#D85A30"></span>High-potential emerging (Indonesia)</span>
+        <span><span class="leg-dot" style="background:#888780"></span>Other markets</span>
+      </div>
+      <div style="position:relative;height:360px"><canvas id="c7"></canvas></div>
+    </div>
+
+    <div class="insight-box">
+      <div class="label">Opportunity gap — Indonesia</div>
+      <p>Indonesia recorded 186.4M total engagements (rank 5 globally) and 144.8M digital streaming viewers — nearly matching Brazil (191.9M). Yet it rarely features in FIFA's primary commercial priorities. With 270M+ population, a median age under 30, and a mobile-first digital culture, Indonesia represents one of the highest-ROI underactivated markets ahead of the 2026 World Cup.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       STRATEGIC ACTIONS
+  ══════════════════════════════════════════ -->
+  <div id="actions" class="section">
+    <div class="insight-box" style="margin-bottom:18px">
+      <div class="label">Strategic framing</div>
+      <p>The 2022 data signals a structural shift — not a temporary blip. Linear TV is contracting while digital engagement is compounding at scale. FIFA's commercial model, rights packaging, and sponsorship activation frameworks must pivot accordingly for 2026 and beyond.</p>
+    </div>
+
+    <div class="section-label">Recommended actions by priority</div>
+    <div class="action-grid">
+      <div class="action-card">
+        <span class="priority-badge pri-high">High priority</span>
+        <h4>Repackage digital rights for Asia</h4>
+        <p>China + Indonesia account for ~65% of digital viewing hours (approx. 1,920M hrs) yet are largely served through a handful of OTT platforms with limited FIFA commercial overlay. Develop tiered digital rights bundles including social media licensing, short-form clip rights, and in-stream ad revenue sharing.</p>
+      </div>
+      <div class="action-card">
+        <span class="priority-badge pri-high">High priority</span>
+        <h4>TikTok &amp; short-form monetisation</h4>
+        <p>TikTok grew 116% in followers (reaching 12M) and surged through the final stages. Instagram drove 60% of all engagements (approx. 487M of the 811M total). FIFA should formalise a content licensing framework for short-form creators — this is currently untapped sponsorship inventory worth hundreds of millions.</p>
+      </div>
+      <div class="action-card">
+        <span class="priority-badge pri-med">Medium priority</span>
+        <h4>Indonesia market activation</h4>
+        <p>186M engagements with near-zero dedicated commercial activation. FIFA should develop an Indonesia-specific strategy: local language content production, domestic sponsorship tiers, and digital-first broadcast rights deals well ahead of the 2026 edition.</p>
+      </div>
+      <div class="action-card">
+        <span class="priority-badge pri-med">Medium priority</span>
+        <h4>VOD rights as a new revenue stream</h4>
+        <p>N.C. America has the highest VOD-to-Live ratio of any region: 53M VOD hours vs 202M Live hours (26% VOD share). Europe follows at 12M VOD vs 309M Live (4%). Packaging delayed and on-demand rights separately from live rights — particularly for subscription platforms in the USA and Mexico — could unlock incremental revenue currently bundled or underpriced.</p>
+      </div>
+      <div class="action-card">
+        <span class="priority-badge pri-med">Medium priority</span>
+        <h4>Africa &amp; Middle East depth play</h4>
+        <p>The region grew 91.3% in viewer hours (from 5.17bn to 9.89bn) and recorded the highest hrs/viewer ratio at 2.9 hours. Morocco's semi-final run drove regional surge. High emotional investment makes this an ideal market for premium subscription upsell and live event ancillary revenue.</p>
+      </div>
+      <div class="action-card">
+        <span class="priority-badge pri-low">Monitor</span>
+        <h4>European FTA coverage decline</h4>
+        <p>Europe saw −24.8% in reach (−163.8M viewers) and −28.9% in consumption (−2.8bn hrs). FTA coverage fell sharply — Germany had 21% fewer FTA coverage hours, Japan 33% fewer. The Pay-TV shift reduces organic reach and long-term fan pipeline. FIFA should set minimum FTA reach thresholds in future rights deal structures.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       GLOSSARY & SOURCES
+  ══════════════════════════════════════════ -->
+  <div id="glossary" class="section">
+    <div class="section-label">Glossary of terms</div>
+    <div class="glossary-grid">
+      <div class="gloss-card"><div class="gloss-term">FWC — FIFA World Cup</div><div class="gloss-def">The quadrennial international men's football tournament organised by FIFA. The 2022 edition was held in Qatar (20 Nov – 18 Dec 2022), featuring 32 nations across 64 matches.</div></div>
+      <div class="gloss-card"><div class="gloss-term">MRL — Media Rights Licensee</div><div class="gloss-def">An organisation granted media rights to broadcast the FIFA World Cup in a specific territory. Data in this report was collected from MRLs via official TV auditing agencies.</div></div>
+      <div class="gloss-card"><div class="gloss-term">FTA — Free-to-Air</div><div class="gloss-def">Television or digital channels available without a subscription fee. Critical for broad organic reach — FTA coverage hours fell 17.5% globally between 2018 and 2022.</div></div>
+      <div class="gloss-card"><div class="gloss-term">Pay-TV</div><div class="gloss-def">Channels accessible only via paid subscription (e.g. beIN Sports, Sky, Canal+). Higher ARPU but lower organic reach than FTA. Africa &amp; Middle East had the highest Pay-TV share (77% of coverage hours).</div></div>
+      <div class="gloss-card"><div class="gloss-term">OTT — Over-the-Top</div><div class="gloss-def">Content delivered directly over the internet, bypassing cable/satellite. Includes streaming apps, broadcaster websites, and IPTV. The primary growth driver in digital reach for 2022.</div></div>
+      <div class="gloss-card"><div class="gloss-term">VOD — Video on Demand</div><div class="gloss-def">Delayed or on-demand viewing after live broadcast. Includes match replays, highlights, and catch-up services. In 2022, VOD accounted for 316M hours of the 2,969M total digital viewing hours (~10.6%).</div></div>
+      <div class="gloss-card"><div class="gloss-term">Unique Reach / 1-min Reach</div><div class="gloss-def">Net number of unique individuals who watched an event for at least 1 consecutive minute. Standard broadcast KPI. Global 1-min reach for FWC 2022 was 2.87 billion viewers.</div></div>
+      <div class="gloss-card"><div class="gloss-term">AMA — Average Minute Audience</div><div class="gloss-def">Sum of per-minute audiences during a broadcast ÷ duration in minutes. Represents how many viewers were watching at any given moment. The 2022 Final AMA was 570.8M viewers.</div></div>
+      <div class="gloss-card"><div class="gloss-term">Viewer Hours</div><div class="gloss-def">Average audience × broadcast duration in hours. One viewer hour = one person watching one hour. Used to measure total consumption depth. Global TV viewer hours for FWC 2022: 36.22 billion.</div></div>
+      <div class="gloss-card"><div class="gloss-term">TVR% — TV Rating</div><div class="gloss-def">Audience as a share of all possible TV viewers in a given market. E.g. France's TVR for the 2022 Final was 44.0%, meaning 44% of France's total TV universe watched.</div></div>
+      <div class="gloss-card"><div class="gloss-term">DAU — Daily Active Users</div><div class="gloss-def">Unique users engaging with a digital platform on a given day. FIFA's avg DAU across all platforms was 18.9M across the 29-day tournament window (20 Nov – 18 Dec 2022).</div></div>
+      <div class="gloss-card"><div class="gloss-term">O&amp;O Digital</div><div class="gloss-def">Owned &amp; Operated platforms — broadcaster websites, apps, and OTT services run directly by the MRL. In 2022, O&amp;O platforms accounted for 90.4% of all digital viewing hours (vs 9.6% on social media).</div></div>
+      <div class="gloss-card"><div class="gloss-term">PSE — Publicis Sport &amp; Entertainment</div><div class="gloss-def">The agency commissioned by FIFA to source, verify, and analyse audience and broadcast data across all territories. Co-producer of the 2022 Global Engagement &amp; Audience Detailed Report.</div></div>
+      <div class="gloss-card"><div class="gloss-term">Competing vs Non-competing markets</div><div class="gloss-def">Competing markets had a national team in the 2022 tournament (e.g. Brazil, France). Non-competing markets (e.g. China, India) had no team — yet China ranked 1st in total engagement with 1,161.3M fans.</div></div>
+    </div>
+
+    <div class="source-box">
+      <h3>Data sources &amp; references</h3>
+      <div class="source-item">
+        <div class="source-num">1</div>
+        <div class="source-text">
+          <strong>FIFA World Cup Qatar 2022 — Global Engagement &amp; Audience Detailed Report</strong>
+          Produced for FIFA by Publicis Sport &amp; Entertainment (PSE) and Nielsen. Official audience measurement and engagement report covering all 64 matches, broadcast data across 200+ territories, digital streaming, and social media metrics. Primary data source for all figures in this dashboard.<br>
+          <a href="https://www.fifa.com/tournaments/mens/worldcup/qatar2022" target="_blank">www.fifa.com/tournaments/mens/worldcup/qatar2022</a>
+        </div>
+      </div>
+      <div class="source-item">
+        <div class="source-num">2</div>
+        <div class="source-text">
+          <strong>Nielsen — Total Engagement Methodology</strong>
+          Claimed consumer behaviour data collected via bespoke primary research across 24 markets (N = 26,000 respondents), November–December 2022. Market and regional extrapolations use modelled audience and digital behaviour data.<br>
+          <a href="https://www.nielsen.com" target="_blank">www.nielsen.com</a>
+        </div>
+      </div>
+      <div class="source-item">
+        <div class="source-num">3</div>
+        <div class="source-text">
+          <strong>FIFA Platforms — Adobe Analytics / OneTrust / Edgio Analytics</strong>
+          FIFA+ app and website engagement data: total users (211.8M), avg DAUs (18.9M), app installs (9.3M), registrations (4.9M), and highlight views (190M) across the 29-day tournament window.
+        </div>
+      </div>
+      <div class="source-item">
+        <div class="source-num">4</div>
+        <div class="source-text">
+          <strong>FIFA Social Media Channels data</strong>
+          Post-level performance data across Facebook, Instagram, X (Twitter), TikTok, and YouTube (14 Nov – 18 Dec 2022): 34.1K posts · 15.0bn impressions · 811M engagements · 3.6bn video views.<br>
+          <a href="https://www.facebook.com/FIFA" target="_blank">facebook.com/FIFA</a> · <a href="https://www.instagram.com/fifa" target="_blank">instagram.com/fifa</a> · <a href="https://www.tiktok.com/@fifa" target="_blank">tiktok.com/@fifa</a>
+        </div>
+      </div>
+      <div class="source-item">
+        <div class="source-num">5</div>
+        <div class="source-text">
+          <strong>Regional broadcast data — official television auditing agencies</strong>
+          Schedule and audience data sourced by PSE from official TV auditing agencies via FIFA MRLs across 200+ territories. Where MRL data was unavailable, PSE applied modelled estimates. Russia and Belarus excluded per applicable sanctions and regulations.
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-box" style="margin-top:14px;border-left-color:#E5A932">
+      <div class="label" style="color:#854F0B">Note on data exclusions</div>
+      <p>Russia and Belarus are excluded from all figures in this report per applicable sanctions and regulations. Russia contributed approximately 118 million viewers in 2018, partially explaining Europe's regional decline. Where a 2018 figure is shown as "Not reported" in tables, this means the exact 2018 baseline was not published in the FIFA source report — only the confirmed % growth vs 2018 is stated. No back-calculated estimates have been used in this dashboard.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Dashboard produced by <strong>Salman Alfaqih</strong> as an independent analytical project &nbsp;|&nbsp;
+    Data sourced from the official <strong>FIFA World Cup Qatar 2022 Global Engagement &amp; Audience Detailed Report</strong> — produced for FIFA by Publicis Sport &amp; Entertainment and Nielsen.<br>
+    This dashboard is intended for portfolio and analytical demonstration purposes only. All data rights belong to FIFA, PSE, and Nielsen.
+  </div>
+
+</div><!-- end db-wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function switchTab(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(!chartsInit) setTimeout(initCharts, 50);
+}
+
+let chartsInit = false;
+function initCharts(){
+  if(chartsInit) return;
+  chartsInit = true;
+
+  const maroon='#8A1538', gold='#E5A932', teal='#1D9E75', coral='#D85A30',
+        gray='#888780', emerald='#5DCAA5';
+  const grid = 'rgba(138,21,56,0.08)';
+  const tick = '#9a7060';
+
+  // ── C1: Media channel reach ──
+  new Chart(document.getElementById('c1'),{
+    type:'bar',
+    data:{
+      labels:['Linear TV','Digital / Streaming','Social Media','FIFA Platforms'],
+      datasets:[
+        {label:'2022 (bn viewers)',data:[2.87,2.65,2.17,0.21],backgroundColor:maroon,borderRadius:5},
+        {label:'2018 — Linear TV only (bn viewers)',data:[3.26,null,null,null],backgroundColor:gold,borderRadius:5}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{font:{size:11},color:tick,boxWidth:12}}},
+      scales:{
+        y:{grid:{color:grid},title:{display:true,text:'Unique audience (billions)',color:tick,font:{size:10}},
+           ticks:{color:tick,callback:v=>v.toFixed(2)+'bn'}},
+        x:{grid:{display:false},ticks:{color:tick}}
+      }}
+  });
+
+  // ── C2: Consumption by edition ──
+  new Chart(document.getElementById('c2'),{
+    type:'line',
+    data:{
+      labels:['2010\n(S.Africa)','2014\n(Brazil)','2018\n(Russia)','2022\n(Qatar)'],
+      datasets:[{
+        label:'TV viewer hours (bn)',
+        data:[34.3,36.5,34.7,36.2],
+        borderColor:maroon,backgroundColor:'rgba(138,21,56,0.08)',
+        fill:true,tension:.35,pointBackgroundColor:maroon,pointRadius:5,pointHoverRadius:7
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'bn viewer hours'}}},
+      scales:{
+        y:{min:30,grid:{color:grid},
+           title:{display:true,text:'Viewer hours (billions)',color:tick,font:{size:10}},
+           ticks:{color:tick,callback:v=>v+'bn'}},
+        x:{grid:{display:false},ticks:{color:tick}}
+      }}
+  });
+
+  // ── C3: Reach vs Consumption grouped bar ──
+  new Chart(document.getElementById('c3'),{
+    type:'bar',
+    data:{
+      labels:['Linear TV reach\n(billions of viewers)','Total TV viewer hours\n(billions of hours)'],
+      datasets:[
+        {label:'2022',data:[2.87,36.22],backgroundColor:maroon,borderRadius:5},
+        {label:'2018',data:[3.26,34.66],backgroundColor:gold,borderRadius:5}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{font:{size:11},color:tick,boxWidth:12}},
+               tooltip:{callbacks:{
+                 label:ctx=>{
+                   const unit = ctx.dataIndex===0 ? 'bn viewers' : 'bn viewer hours';
+                   return ` ${ctx.dataset.label}: ${ctx.parsed.y}${unit}`;
+                 }
+               }}},
+      scales:{
+        y:{grid:{color:grid},
+           title:{display:true,text:'Value (billions)',color:tick,font:{size:10}},
+           ticks:{color:tick,callback:v=>v+'bn'}},
+        x:{grid:{display:false},ticks:{color:tick,font:{size:10}}}
+      }}
+  });
+
+  // ── C_SOCIAL: Social media 2022 actuals — single dataset, growth % as labels ──
+  new Chart(document.getElementById('c_social'),{
+    type:'bar',
+    data:{
+      labels:[
+        'Impressions\n(bn)',
+        'Video views\n(bn)',
+        'Engagements\n(M)',
+        'New followers\n(M)',
+        'Posts\n(K)'
+      ],
+      datasets:[
+        {
+          label:'2022 confirmed figure',
+          data:[15.0, 3.6, 811, 28.9, 34.1],
+          backgroundColor:[maroon,maroon,maroon,maroon,maroon],
+          borderRadius:5
+        }
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:ctx=>{
+            const units  =['bn impressions','bn video views','M engagements','M new followers','K posts'];
+            const growth =['+113% vs 2018','+202% vs 2018','+448% vs 2018','+111% vs 2018','n/a vs 2018'];
+            return [
+              ` 2022: ${ctx.parsed.y} ${units[ctx.dataIndex]}`,
+              ` Growth: ${growth[ctx.dataIndex]}`
+            ];
+          }
+        }}
+      },
+      scales:{
+        y:{grid:{color:grid},
+           title:{display:true,text:'Value (see unit label on each bar)',color:tick,font:{size:10}},
+           ticks:{color:tick}},
+        x:{grid:{display:false},ticks:{color:tick,font:{size:10}}}
+      }
+    },
+    plugins:[{
+      id:'growthLabels',
+      afterDatasetsDraw(chart){
+        const {ctx,data,scales:{x,y}} = chart;
+        const growth=['+113%','+202%','+448%','+111%',''];
+        ctx.save();
+        data.datasets[0].data.forEach((val,i)=>{
+          if(!growth[i]) return;
+          const meta = chart.getDatasetMeta(0);
+          const bar  = meta.data[i];
+          ctx.fillStyle = '#0F6E56';
+          ctx.font = 'bold 10px Segoe UI, Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('vs 2018', bar.x, bar.y - 18);
+          ctx.fillText(growth[i], bar.x, bar.y - 6);
+        });
+        ctx.restore();
+      }
+    }]
+  });
+
+  // ── C4: Digital hours doughnut ──
+  new Chart(document.getElementById('c4'),{
+    type:'doughnut',
+    data:{
+      labels:['Asia (62.8%)','South America (15.9%)','Europe (11.1%)','N.C. America (8.6%)','Oceania (1.2%)','Africa & ME (0.5%)'],
+      datasets:[{
+        data:[62.8,15.9,11.1,8.6,1.2,0.5],
+        backgroundColor:[maroon,teal,coral,gold,emerald,gray],
+        borderWidth:3,borderColor:'#F9F3EE'
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'right',labels:{font:{size:11},color:tick,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed.toFixed(1)}% of 2.97bn digital hrs`}}
+      },
+      cutout:'55%'}
+  });
+
+  // ── C5: Live vs VOD ──
+  new Chart(document.getElementById('c5'),{
+    type:'bar',
+    data:{
+      labels:['Asia','S. America','Europe','N.C. America','Africa & ME','Oceania'],
+      datasets:[
+        {label:'Live (M hrs)',data:[1674,434,309,202,1,33],backgroundColor:maroon,borderRadius:4},
+        {label:'VOD (M hrs)',data:[191,38,12,53,14,7],backgroundColor:gold,borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{font:{size:11},color:tick,boxWidth:12}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:tick,font:{size:10}}},
+        y:{grid:{color:grid},
+           title:{display:true,text:'Viewing hours (millions)',color:tick,font:{size:10}},
+           ticks:{color:tick,callback:v=>v+'M'}}
+      }}
+  });
+
+  // ── C6: Regional TV reach ──
+  new Chart(document.getElementById('c6'),{
+    type:'bar',
+    data:{
+      labels:['Africa & ME','Asia','Europe','N.C. America','Oceania','S. America'],
+      datasets:[
+        {label:'2022 (M viewers)',data:[550,1226.8,497.5,267.2,13,318.6],backgroundColor:maroon,borderRadius:4},
+        {label:'2018 (M viewers)',data:[537,1415.7,661.3,277.2,14.8,355.9],backgroundColor:gold,borderRadius:4}
+      ]
+    },
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{font:{size:11},color:tick,boxWidth:12}}},
+      scales:{
+        x:{grid:{color:grid},
+           title:{display:true,text:'Unique viewers (millions)',color:tick,font:{size:10}},
+           ticks:{color:tick,callback:v=>v+'M'}},
+        y:{grid:{display:false},ticks:{color:tick,font:{size:11}}}
+      }}
+  });
+
+  // ── C7: Top markets ──
+  const mktColors = i => i<2 ? maroon : i<4 ? teal : i===4 ? coral : gray;
+  new Chart(document.getElementById('c7'),{
+    type:'bar',
+    data:{
+      labels:['China','India','Brazil','USA','Indonesia','Japan','Mexico','Turkey','Egypt','Germany'],
+      datasets:[{
+        label:'Total engagement (M fans)',
+        data:[1161.3,745.7,191.9,187.3,186.4,101.3,101.2,70.9,62.1,60.2],
+        backgroundColor:[...Array(10)].map((_,i)=>mktColors(i)),
+        borderRadius:4
+      }]
+    },
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:grid},
+           title:{display:true,text:'Total engaged fans (millions)',color:tick,font:{size:10}},
+           ticks:{color:tick,callback:v=>v+'M'}},
+        y:{grid:{display:false},ticks:{color:tick,font:{size:11}}}
+      }}
+  });
+}
+
+setTimeout(initCharts, 300);
+</script>
+</body>
+</html>
